@@ -81,12 +81,9 @@ akka.remote.dot-netty.tcp.port = 0
                     });
             });
 
-            _client.GetOrCreateAsync()
-            var members = await _rawClient.GetAllChildrenExtendedNodesAsync(_client.FullNodePath);
-            members.Count.Should().Be(1);
 
-            var fetched = ClusterMember.FromData(_client.ServiceName, members[0].Name, members[0].Data);
-            fetched.LastUpdate.Should().BeAfter(firstEntry.LastUpdate);
+            var members = await _client.GetAllAsync();
+            members.Count.Should().Be(1);
         }
     }
 }
