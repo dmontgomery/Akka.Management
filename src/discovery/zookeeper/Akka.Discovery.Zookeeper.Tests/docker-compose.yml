@@ -1,0 +1,15 @@
+  services:
+    zookeeper1:
+      image: zookeeper:latest
+      hostname: zookeeper1
+      ports:
+        - "2181:2181"
+      environment:
+        ALLOW_ANONYMOUS_LOGIN: "yes"
+    zoonavigator:
+      image: elkozmon/zoonavigator:latest
+      ports:
+        - "9000:9000"
+      environment:
+        HTTP_PORT: 9000
+        AUTO_CONNECT_CONNECTION_STRING: zookeeper1:2181
