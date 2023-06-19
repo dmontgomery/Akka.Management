@@ -17,10 +17,7 @@ namespace Akka.Discovery.Zookeeper
             hostName: Dns.GetHostName(),
             port: 8558,
             connectionString: "<connection-string>",
-            nodeName: "leader-election",
-            ttlHeartbeatInterval: TimeSpan.FromMinutes(1),
-            staleTtlThreshold: TimeSpan.Zero,
-            pruneInterval: TimeSpan.FromHours(1),
+            nodeName: "group-membership",
             operationTimeout: TimeSpan.FromSeconds(10),
             retryBackoff: TimeSpan.FromMilliseconds(500),
             maximumRetryBackoff: TimeSpan.FromSeconds(5));
@@ -45,9 +42,6 @@ namespace Akka.Discovery.Zookeeper
                 port: cfg.GetInt("public-port"),
                 connectionString: cfg.GetString("connection-string"),
                 nodeName: cfg.GetString("node-name"),
-                ttlHeartbeatInterval: cfg.GetTimeSpan("ttl-heartbeat-interval"),
-                staleTtlThreshold: cfg.GetTimeSpan("stale-ttl-threshold"),
-                pruneInterval: cfg.GetTimeSpan("prune-interval"),
                 operationTimeout: cfg.GetTimeSpan("operation-timeout"),
                 retryBackoff: cfg.GetTimeSpan("retry-backoff"),
                 maximumRetryBackoff: cfg.GetTimeSpan("max-retry-backoff"));
@@ -59,24 +53,10 @@ namespace Akka.Discovery.Zookeeper
             int port,
             string connectionString,
             string nodeName,
-            TimeSpan ttlHeartbeatInterval,
-            TimeSpan staleTtlThreshold,
-            TimeSpan pruneInterval,
             TimeSpan operationTimeout,
             TimeSpan retryBackoff,
             TimeSpan maximumRetryBackoff)
         {
-            if (ttlHeartbeatInterval <= TimeSpan.Zero)
-                throw new ArgumentException("Must be greater than zero", nameof(ttlHeartbeatInterval));
-            
-            if (pruneInterval <= TimeSpan.Zero)
-                throw new ArgumentException("Must be greater than zero", nameof(pruneInterval));
-            
-            if (staleTtlThreshold != TimeSpan.Zero && staleTtlThreshold < ttlHeartbeatInterval)
-                throw new ArgumentException(
-                    $"Must be greater than {nameof(ttlHeartbeatInterval)} if set to non zero",
-                    nameof(staleTtlThreshold));
-
             if(string.IsNullOrWhiteSpace(hostName))
                 throw new ArgumentException(
                     "Must not be empty or whitespace",
@@ -106,22 +86,31 @@ namespace Akka.Discovery.Zookeeper
             Port = port;
             ConnectionString = connectionString;
             NodeName = nodeName;
-            TtlHeartbeatInterval = ttlHeartbeatInterval;
-            StaleTtlThreshold = staleTtlThreshold;
-            PruneInterval = pruneInterval;
             OperationTimeout = operationTimeout;
             RetryBackoff = retryBackoff;
             MaximumRetryBackoff = maximumRetryBackoff;
         }
 
+        /// <summary>
+        /// The service name assigned to the cluster
+        /// </summary>
         public string ServiceName { get; }
+        /// <summary>
+        /// The public facing IP/host of this node
+        /// </summary>
         public string HostName { get; }
+        /// <summary>
+        /// The public open akka management port of this node
+        /// </summary>
         public int Port { get; }
+        /// <summary>
+        /// The connection string to the Zookeeper server or cluster
+        /// </summary>
         public string ConnectionString { get; }
+        /// <summary>
+        /// named Zookeeper node for group membership.  Complete path becomes /Akka.Discovery.Zookeeper/{service-name}/{node-name}
+        /// </summary>
         public string NodeName { get; }
-        public TimeSpan TtlHeartbeatInterval { get; }
-        public TimeSpan StaleTtlThreshold { get; }
-        public TimeSpan PruneInterval { get; }
         public TimeSpan OperationTimeout { get; }
         public TimeSpan RetryBackoff { get; }
         public TimeSpan MaximumRetryBackoff { get; }
@@ -133,15 +122,9 @@ namespace Akka.Discovery.Zookeeper
                $"{nameof(Port)}:{Port}, " +
                $"{nameof(ConnectionString)}:{ConnectionString}, " +
                $"{nameof(NodeName)}:{NodeName}, " +
-               $"{nameof(TtlHeartbeatInterval)}:{TtlHeartbeatInterval}, " +
-               $"{nameof(StaleTtlThreshold)}:{StaleTtlThreshold}, " +
-               $"{nameof(PruneInterval)}:{PruneInterval}, " +
                $"{nameof(OperationTimeout)}:{OperationTimeout}, " +
                $"{nameof(RetryBackoff)}:{RetryBackoff}, " +
                $"{nameof(MaximumRetryBackoff)}:{MaximumRetryBackoff})";
-        
-        public TimeSpan EffectiveStaleTtlThreshold
-            => StaleTtlThreshold == TimeSpan.Zero ? new TimeSpan(TtlHeartbeatInterval.Ticks * 5)  : StaleTtlThreshold;
         
         public ZookeeperDiscoverySettings WithServiceName(string serviceName)
             => Copy(serviceName: serviceName);
@@ -158,15 +141,6 @@ namespace Akka.Discovery.Zookeeper
         public ZookeeperDiscoverySettings WithNodeName(string nodeName)
             => Copy(nodeName: nodeName);
 
-        public ZookeeperDiscoverySettings WithTtlHeartbeatInterval(TimeSpan ttlHeartbeatInterval)
-            => Copy(ttlHeartbeatInterval: ttlHeartbeatInterval);
-        
-        public ZookeeperDiscoverySettings WithStaleTtlThreshold(TimeSpan staleTtlThreshold)
-            => Copy(staleTtlThreshold: staleTtlThreshold);
-        
-        public ZookeeperDiscoverySettings WithPruneInterval(TimeSpan pruneInterval)
-            => Copy(pruneInterval: pruneInterval);
-
         public ZookeeperDiscoverySettings WithOperationTimeout(TimeSpan operationTimeout)
             => Copy(operationTimeout: operationTimeout);
         
@@ -179,9 +153,6 @@ namespace Akka.Discovery.Zookeeper
             int? port = null,
             string? connectionString = null,
             string? nodeName = null,
-            TimeSpan? pruneInterval = null,
-            TimeSpan? staleTtlThreshold = null,
-            TimeSpan? ttlHeartbeatInterval = null,
             TimeSpan? operationTimeout = null,
             TimeSpan? retryBackoff = null,
             TimeSpan? maximumRetryBackoff = null)
@@ -191,9 +162,6 @@ namespace Akka.Discovery.Zookeeper
                 port: port ?? Port,
                 connectionString: connectionString ?? ConnectionString,
                 nodeName: nodeName ?? NodeName,
-                ttlHeartbeatInterval: ttlHeartbeatInterval ?? TtlHeartbeatInterval,
-                staleTtlThreshold: staleTtlThreshold ?? StaleTtlThreshold,
-                pruneInterval: pruneInterval ?? PruneInterval,
                 operationTimeout: operationTimeout ?? OperationTimeout,
                 retryBackoff: retryBackoff ?? RetryBackoff,
                 maximumRetryBackoff: maximumRetryBackoff ?? MaximumRetryBackoff);

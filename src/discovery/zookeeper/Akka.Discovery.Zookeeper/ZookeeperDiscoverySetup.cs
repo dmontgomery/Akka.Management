@@ -17,9 +17,6 @@ namespace Akka.Discovery.Zookeeper
         public int? Port { get; set; }
         public string? ConnectionString { get; set; }
         public string? NodeName { get; set; }
-        public TimeSpan? TtlHeartbeatInterval { get; set; }
-        public TimeSpan? StaleTtlThreshold { get; set; }
-        public TimeSpan? PruneInterval { get; set; }
         public TimeSpan? OperationTimeout { get; set; }
         public TimeSpan? RetryBackoff { get; set; }
         public TimeSpan? MaximumRetryBackoff { get; set; }
@@ -54,24 +51,6 @@ namespace Akka.Discovery.Zookeeper
             return this;
         }
 
-        public ZookeeperDiscoverySetup WithTtlHeartbeatInterval(TimeSpan ttlHeartbeatInterval)
-        {
-            TtlHeartbeatInterval = ttlHeartbeatInterval;
-            return this;
-        }
-        
-        public ZookeeperDiscoverySetup WithStaleTtlThreshold(TimeSpan staleTtlThreshold)
-        {
-            StaleTtlThreshold = staleTtlThreshold;
-            return this;
-        }
-        
-        public ZookeeperDiscoverySetup WithPruneInterval(TimeSpan pruneInterval)
-        {
-            PruneInterval = pruneInterval;
-            return this;
-        }
-
         public ZookeeperDiscoverySetup WithOperationTimeout(TimeSpan operationTimeout)
         {
             OperationTimeout = operationTimeout;
@@ -98,12 +77,6 @@ namespace Akka.Discovery.Zookeeper
                 props.Add($"{nameof(Port)}:{Port}");
             if(ConnectionString != null)
                 props.Add($"{nameof(ConnectionString)}:{ConnectionString}");
-            if(TtlHeartbeatInterval != null)
-                props.Add($"{nameof(TtlHeartbeatInterval)}:{TtlHeartbeatInterval}");
-            if(StaleTtlThreshold != null)
-                props.Add($"{nameof(StaleTtlThreshold)}:{StaleTtlThreshold}");
-            if(PruneInterval != null)
-                props.Add($"{nameof(PruneInterval)}:{PruneInterval}");
             if(OperationTimeout != null)
                 props.Add($"{nameof(OperationTimeout)}:{OperationTimeout}");
             if(RetryBackoff != null)
@@ -126,12 +99,6 @@ namespace Akka.Discovery.Zookeeper
                 setting = setting.WithPublicPort(Port.Value);
             if (ConnectionString != null)
                 setting = setting.WithConnectionString(ConnectionString);
-            if (TtlHeartbeatInterval != null)
-                setting = setting.WithTtlHeartbeatInterval(TtlHeartbeatInterval.Value);
-            if (StaleTtlThreshold != null)
-                setting = setting.WithStaleTtlThreshold(StaleTtlThreshold.Value);
-            if (PruneInterval != null)
-                setting = setting.WithPruneInterval(PruneInterval.Value);
             if (OperationTimeout != null)
                 setting = setting.WithOperationTimeout(OperationTimeout.Value);
             if (RetryBackoff != null && MaximumRetryBackoff != null)

@@ -13,32 +13,7 @@ using Akka.Actor;
 namespace Akka.Discovery.Zookeeper;
 
 /// <summary>
-/// Thrown when a prune operation failed
-/// </summary>
-public sealed class PruneOperationException: AkkaException
-{
-    public PruneOperationException(List<string> reasons)
-    {
-        Reasons = reasons;
-    }
-
-    public PruneOperationException(string message, List<string> reasons, Exception? cause = null) : base(message, cause)
-    {
-        Reasons = reasons;
-    }
-
-    public PruneOperationException(SerializationInfo info, StreamingContext context) : base(info, context)
-    {
-        Reasons = new List<string>();
-    }
-    
-    public List<string> Reasons { get; }
-
-    public override string Message => $"{base.Message}. Reasons:\n\t-{string.Join("\n\t-", Reasons)}";
-}
-
-/// <summary>
-/// Thrown when <see cref="ClusterMemberZookeeperClient"/> failed to connect to Zookeeper service
+/// Thrown when <see cref="ZkMembershipClient"/> failed to connect to Zookeeper service
 /// </summary>
 public sealed class InitializationException : AkkaException
 {
@@ -56,37 +31,19 @@ public sealed class InitializationException : AkkaException
 }
 
 /// <summary>
-/// Thrown when the client failed to update the node entity
+/// Failed to perform lookup of zookeeper nodes
 /// </summary>
-public sealed class UpdateOperationException : AkkaException
+public sealed class MemberLookupException : Exception
 {
-    public UpdateOperationException()
+    public MemberLookupException()
     {
     }
 
-    public UpdateOperationException(string message, Exception? cause = null) : base(message, cause)
+    public MemberLookupException(string message) : base(message)
     {
     }
 
-    public UpdateOperationException(SerializationInfo info, StreamingContext context) : base(info, context)
-    {
-    }
-}
-
-/// <summary>
-/// Thrown when the client failed to create an entity entry
-/// </summary>
-public sealed class CreateEntityFailedException : AkkaException
-{
-    public CreateEntityFailedException()
-    {
-    }
-
-    public CreateEntityFailedException(string message, Exception? cause = null) : base(message, cause)
-    {
-    }
-
-    public CreateEntityFailedException(SerializationInfo info, StreamingContext context) : base(info, context)
+    public MemberLookupException(string message, Exception inner) : base(message, inner)
     {
     }
 }

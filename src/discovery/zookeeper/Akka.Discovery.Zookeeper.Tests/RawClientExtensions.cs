@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using Akka.Event;
 using org.apache.zookeeper;
 
 namespace Akka.Discovery.Zookeeper.Tests;
@@ -35,27 +36,31 @@ public class RawZookeeperForTesting : org.apache.zookeeper.ZooKeeper
         return result;
     }
     
-    public RawZookeeperForTesting(string connectString, int sessionTimeout) 
-        : base(connectString, sessionTimeout, new ConnectionWatcher())
+    public RawZookeeperForTesting(string connectString, int sessionTimeout, ILoggingAdapter log) 
+        : base(connectString, sessionTimeout, new ConnectionWatcher(log))
     {
     }
     
     private sealed class ConnectionWatcher : Watcher
     {
-        private readonly TaskCompletionSource<UnusedClass> _tcs = new();
-        public Task WaitForConnectionAsync() => _tcs.Task;
+        private readonly ILoggingAdapter _log;
+
+        public ConnectionWatcher(ILoggingAdapter log)
+        {
+            _log = log;
+        }
+
+        private readonly TaskCompletionSource<bool> _connectionEstablished = new TaskCompletionSource<bool>();
+
+        public Task WaitForConnectionAsync() => _connectionEstablished.Task;
 
         public override Task process(WatchedEvent @event)
         {
-            if (@event.getState() is Event.KeeperState.SyncConnected)
-                _tcs.TrySetResult(new UnusedClass());
-
+            if (_log.IsDebugEnabled)
+                _log.Debug("Zookeeper connection state change:" + @event.ToString());
+            if (@event.getState() == Event.KeeperState.SyncConnected)
+                _connectionEstablished.TrySetResult(true);
             return Task.CompletedTask;
         }
-    }
-        
-    private class UnusedClass
-    {
-        // this can be removed after NET 6?
     }
 }

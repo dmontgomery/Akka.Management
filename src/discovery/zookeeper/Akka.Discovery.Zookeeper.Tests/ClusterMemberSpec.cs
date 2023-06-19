@@ -5,7 +5,6 @@
 // -----------------------------------------------------------------------
 
 using System.Net;
-using Akka.Discovery.Zookeeper.Model;
 using FluentAssertions;
 using Xunit;
 
@@ -24,8 +23,8 @@ namespace Akka.Discovery.Zookeeper.Tests
         [Fact(DisplayName = "Should create and parse RowKey properly")]
         public void ClusterMemberMemberKeyTest()
         {
-            var rowKey = ClusterMember.CreateMemberKey(Host, _address, Port);
-            var (host, address, port) = ClusterMember.ParseMemberKey(rowKey);
+            var rowKey = ZkMember.CreateMemberKey(Host, _address, Port);
+            var (host, address, port) = ZkMember.ParseMemberKey(rowKey);
 
             host.Should().Be(Host);
             address.Should().Be(_address);

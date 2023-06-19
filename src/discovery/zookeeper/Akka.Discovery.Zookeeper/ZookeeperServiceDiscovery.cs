@@ -1,11 +1,11 @@
 using System;
+using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
 using System.Threading.Tasks;
 using Akka.Actor;
 using Akka.Configuration;
 using Akka.Discovery.Zookeeper.Actors;
-using Akka.Discovery.Zookeeper.Model;
 using Akka.Event;
 
 namespace Akka.Discovery.Zookeeper;
@@ -65,11 +65,17 @@ public class ZookeeperServiceDiscovery: ServiceDiscovery
 
         try
         {
-            var members = await _guardianActor.Ask<ImmutableList<ClusterMember>>(lookup, resolveTimeout);
+            var members = await _guardianActor.Ask<ImmutableList<ZkMember>>(lookup, resolveTimeout);
+           
+            var result = new Resolved(lookup.ServiceName, 
+               members.Select(m => new ResolvedTarget(m.Host, m.Port, m.Address))
+                   .ToImmutableList());
 
-            return new Resolved(
-                lookup.ServiceName,
-                members.Select(m => new ResolvedTarget(m.Host, m.Port, m.Address)).ToImmutableList());
+            if (_log.IsDebugEnabled)
+                _log.Debug("Lookup for service {0} completed with {1} targets", lookup.ServiceName,
+                    result.Addresses.Count);
+
+            return result;
         }
         catch (Exception e)
         {

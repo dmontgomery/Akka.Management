@@ -4,9 +4,9 @@
 //  </copyright>
 // -----------------------------------------------------------------------
 
+using System;
 using System.Net;
 using System.Threading.Tasks;
-using Akka.Discovery.Zookeeper.Model;
 using Akka.Event;
 using FluentAssertions;
 using Xunit;
@@ -24,54 +24,62 @@ namespace Akka.Discovery.Zookeeper.Tests
         private readonly IPAddress _address = IPAddress.Loopback;
         private const int FirstPort = 12345;
 
-        private readonly ClusterMemberZookeeperClient _client;
+        private readonly ZkMembershipClient _client;
         private readonly RawZookeeperForTesting _rawClient;
         private readonly ILoggingAdapter _logger;
-
-        private int _lastPort = FirstPort;
+        private readonly string fullZkNodePath;
 
         public ClusterMemberZookeeperClientSpec(ITestOutputHelper helper)
             : base("akka.loglevel = DEBUG", nameof(ClusterMemberZookeeperClientSpec), helper)
         {
-            _logger = Logging.GetLogger(Sys, nameof(ClusterMemberZookeeperClient));
+            _logger = Logging.GetLogger(Sys, nameof(ClusterMemberZookeeperClientSpec));
             var settings = ZookeeperDiscoverySettings.Empty
-                .WithServiceName(ServiceName)
+                .WithServiceName(ServiceName + DateTime.Now.Ticks)
                 .WithConnectionString(ConnectionString)
                 .WithNodeName(NodeName);
-            _client = new ClusterMemberZookeeperClient(settings, _logger);
-            _rawClient = new RawZookeeperForTesting(ConnectionString, (int)settings.OperationTimeout.TotalMilliseconds);
+            fullZkNodePath = ZkPathHelper.BuildFullPathFromSettingValues(settings.ServiceName, settings.NodeName);
+            _client = new ZkMembershipClient(settings.ConnectionString, fullZkNodePath, 
+                ZkMember.CreateMemberKey(Host, _address, FirstPort), _logger,
+                (int)settings.OperationTimeout.TotalMilliseconds);
+            _rawClient = new RawZookeeperForTesting(ConnectionString, (int)settings.OperationTimeout.TotalMilliseconds, 
+                _logger);
         }
 
         public async Task InitializeAsync()
         {
-            // nothing to init?
+            await _client.Start();
         }
 
         public Task DisposeAsync()
         {
-            return Task.CompletedTask;
+            return Task.FromResult(_client.Stop());
         }
 
-        [Fact(DisplayName = "GetOrCreateAsync should create an active node")]
+        [Fact(DisplayName = "Start/Connect should create an active node")]
         public async Task GetOrCreateInsert()
         {
-            // Test will fail here if the client did not create the appropriate node
-            var entity = await _client.GetOrCreateAsync(Host, _address, FirstPort);
-
-            // there should only be one child
+            // client should know about one child
+            _client.Members.Count.Should().Be(1);
+            
+            // child from list should match self node
+            var firstMember = _client.Members[0];
+            firstMember.Should().Be(_client.SelfNode);
+            
+            // there should only be one child per raw client
             if (_logger.IsDebugEnabled)
-                _logger.Log(LogLevel.DebugLevel, $"Looking for children");
-            var children = await _rawClient.GetAllChildrenExtendedNodesAsync(_client.FullNodePath);
+                _logger.Log(LogLevel.DebugLevel, $"Looking for children using raw client");
+            var children = await _rawClient.GetAllChildrenExtendedNodesAsync(fullZkNodePath);
             if (_logger.IsDebugEnabled)
                 _logger.Log(LogLevel.DebugLevel, $"There are {children.Count} children");
             children.Count.Should().Be(1);
+            
+            // fetched raw node should match our 'SelfNode'
             var firstChild = children[0];
-
-            // node should match
-            var fetchedMember = ClusterMember.FromData(_client.ServiceName, firstChild.Name, firstChild.Data);
-            entity.Should().Be(fetchedMember);
+            var childPath = $"{fullZkNodePath}/{firstChild.Name}";
             if (_logger.IsDebugEnabled)
-                _logger.Log(LogLevel.DebugLevel, $"Fetched member has key value of {fetchedMember.MemberKey}");
+                _logger.Log(LogLevel.DebugLevel, $"Fetched member has key value of {System.Text.Encoding.UTF8.GetString(firstChild.Data.Data)}");
+            var member = new ZkMember(firstChild.Name, childPath, firstChild.Data.Data, firstChild.Data.Stat);
+            member.DataAsString.Should().Be(_client.SelfNode.DataAsString);
         }
     }
 }

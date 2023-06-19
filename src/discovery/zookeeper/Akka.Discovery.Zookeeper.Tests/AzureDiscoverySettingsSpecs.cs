@@ -29,12 +29,8 @@ namespace Akka.Discovery.Zookeeper.Tests
             settings.HostName.Should().Be(Dns.GetHostName());
             settings.Port.Should().Be(8558);
             settings.ConnectionString.Should().Be("<connection-string>");
-            settings.NodeName.Should().Be("leader-election");
-            settings.TtlHeartbeatInterval.Should().Be(1.Minutes());
-            settings.StaleTtlThreshold.Should().Be(TimeSpan.Zero);
-            settings.PruneInterval.Should().Be(1.Hours());
+            settings.NodeName.Should().Be("group-membership");
             settings.OperationTimeout.Should().Be(10.Seconds());
-            settings.EffectiveStaleTtlThreshold.Should().Be(new TimeSpan(settings.TtlHeartbeatInterval.Ticks * 5));
         }
 
         [Fact(DisplayName = "Empty settings variable and default settings should match")]
@@ -48,11 +44,7 @@ namespace Akka.Discovery.Zookeeper.Tests
             empty.Port.Should().Be(settings.Port);
             empty.ConnectionString.Should().Be(settings.ConnectionString);
             empty.NodeName.Should().Be(settings.NodeName);
-            empty.TtlHeartbeatInterval.Should().Be(settings.TtlHeartbeatInterval);
-            empty.StaleTtlThreshold.Should().Be(settings.StaleTtlThreshold);
-            empty.PruneInterval.Should().Be(settings.PruneInterval);
             empty.OperationTimeout.Should().Be(settings.OperationTimeout);
-            empty.EffectiveStaleTtlThreshold.Should().Be(settings.EffectiveStaleTtlThreshold);
         }
 
         [Fact(DisplayName = "Settings override should work properly")]
@@ -65,9 +57,6 @@ namespace Akka.Discovery.Zookeeper.Tests
                 .WithPublicPort(1234)
                 .WithConnectionString("b")
                 .WithNodeName("c")
-                .WithTtlHeartbeatInterval(1.Seconds())
-                .WithStaleTtlThreshold(2.Seconds())
-                .WithPruneInterval(3.Seconds())
                 .WithOperationTimeout(4.Seconds());
 
             settings.ServiceName.Should().Be("a");
@@ -75,11 +64,7 @@ namespace Akka.Discovery.Zookeeper.Tests
             settings.Port.Should().Be(1234);
             settings.ConnectionString.Should().Be("b");
             settings.NodeName.Should().Be("c");
-            settings.TtlHeartbeatInterval.Should().Be(1.Seconds());
-            settings.StaleTtlThreshold.Should().Be(2.Seconds());
-            settings.PruneInterval.Should().Be(3.Seconds());
             settings.OperationTimeout.Should().Be(4.Seconds());
-            settings.EffectiveStaleTtlThreshold.Should().Be(settings.StaleTtlThreshold);
         }
 
         [Fact(DisplayName = "Setup override should work properly")]
@@ -92,23 +77,16 @@ namespace Akka.Discovery.Zookeeper.Tests
                 .WithPublicPort(1234)
                 .WithConnectionString("b")
                 .WithNodeName("c")
-                .WithTtlHeartbeatInterval(1.Seconds())
-                .WithStaleTtlThreshold(2.Seconds())
-                .WithPruneInterval(3.Seconds())
                 .WithOperationTimeout(4.Seconds());
-            
+
             var settings = setup.Apply(ZookeeperDiscoverySettings.Empty);
-            
+
             settings.ServiceName.Should().Be("a");
             settings.HostName.Should().Be("host");
             settings.Port.Should().Be(1234);
             settings.ConnectionString.Should().Be("b");
             settings.NodeName.Should().Be("c");
-            settings.TtlHeartbeatInterval.Should().Be(1.Seconds());
-            settings.StaleTtlThreshold.Should().Be(2.Seconds());
-            settings.PruneInterval.Should().Be(3.Seconds());
             settings.OperationTimeout.Should().Be(4.Seconds());
-            settings.EffectiveStaleTtlThreshold.Should().Be(settings.StaleTtlThreshold);
         }
 
         [Fact(DisplayName = "Settings constructor should throw on invalid values")]
@@ -116,15 +94,6 @@ namespace Akka.Discovery.Zookeeper.Tests
         {
             var settings = ZookeeperDiscoverySettings.Empty;
 
-            Invoking(() => settings.WithTtlHeartbeatInterval(TimeSpan.Zero))
-                .Should().ThrowExactly<ArgumentException>().WithMessage("Must be greater than zero*");
-
-            Invoking(() => settings.WithPruneInterval(TimeSpan.Zero))
-                .Should().ThrowExactly<ArgumentException>().WithMessage("Must be greater than zero*");
-
-            Invoking(() => settings.WithStaleTtlThreshold(1.Seconds()))
-                .Should().ThrowExactly<ArgumentException>().WithMessage("Must be greater than*");
-            
             Invoking(() => settings.WithPublicHostName(""))
                 .Should().ThrowExactly<ArgumentException>().WithMessage("Must not be empty or whitespace*");
             
