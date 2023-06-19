@@ -9,7 +9,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <None Remove="protobuf\ClusterMemberProto.proto" />
+    <Protobuf Include="protobuf\ZkMemberProto.proto" Access="Internal" />
   </ItemGroup>
 
   <ItemGroup>

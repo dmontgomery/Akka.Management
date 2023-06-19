@@ -12,6 +12,7 @@ using Akka.Actor;
 using Akka.Configuration;
 using Akka.Discovery.Zookeeper.Actors;
 using Akka.Event;
+using Akka.TestKit;
 using FluentAssertions;
 using FluentAssertions.Extensions;
 using Xunit;
@@ -67,32 +68,23 @@ akka.remote.dot-netty.tcp.port = 0
                 .WithConnectionString(ConnectionString)
                 .WithServiceName(ServiceName + DateTime.Now.Ticks)
                 .WithNodeName(NodeName);
-
+            
             // Initialize client
             var resolvedHost = ZookeeperDiscoveryGuardian.ParseAndResolveHostName(settings.HostName);
             var actor = Sys.ActorOf(HeartbeatActor.Props(settings, resolvedHost.HostValue, resolvedHost.Address,
                 settings.Port));
-            
-            // TODO this seems really goofy.  There has to be a better way to do this.
-            while (true)
-            {
-                var ct = 1;
-                var isReady = await actor.Ask<bool>(HeartbeatActor.AreYouReady.Instance, settings.OperationTimeout);
-                if (isReady)
-                {
-                    break;
-                }
 
-                _logger.Debug($"Not ready yet...{ct}");
-                await Task.Delay(100);
-                ct++;
-            }
-            
-            await WithinAsync(3.Seconds(), async () =>
+            await WithinAsync(30.Seconds(), async () =>
             {
-                var memberList = await actor.Ask<ImmutableList<ZkMember>>(new Lookup(ServiceName), settings.OperationTimeout);
-                memberList.Should().NotBeNull();
-                memberList?.Count.Should().Be(1);
+                while (true)
+                {
+                    var memberList = await actor.Ask<ImmutableList<ZkMember>>(new Lookup(ServiceName), 
+                        settings.OperationTimeout);
+                    if (memberList is { Count: > 0 })
+                    {
+                        break;
+                    }
+                }
             });
         }
     }

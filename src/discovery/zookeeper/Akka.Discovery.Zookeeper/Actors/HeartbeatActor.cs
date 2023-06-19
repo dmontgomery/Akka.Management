@@ -54,15 +54,6 @@ namespace Akka.Discovery.Zookeeper.Actors
                 _log, (int)settings.OperationTimeout.TotalMilliseconds);
         }
 
-        internal sealed class AreYouReady
-        {
-            public static readonly AreYouReady Instance = new AreYouReady();
-
-            private AreYouReady()
-            {
-            }
-        }
-        
         private sealed class Start
         {
             public static readonly Start Instance = new Start();
@@ -122,10 +113,6 @@ namespace Akka.Discovery.Zookeeper.Actors
         {
             switch (message)
             {
-                case AreYouReady _:
-                    Sender.Tell(false, Self);
-                    return true;
-                
                 case Start _:
                     if (_log.IsDebugEnabled)
                         _log.Debug("Initializing actor");
@@ -161,10 +148,6 @@ namespace Akka.Discovery.Zookeeper.Actors
         {
             switch (message)
             {
-                case AreYouReady _:
-                    Sender.Tell(true, Self);
-                    return true;
-                
                 case Lookup lookup:
                     if (_log.IsDebugEnabled)
                         _log.Debug("Lookup started for service {0}", lookup.ServiceName);

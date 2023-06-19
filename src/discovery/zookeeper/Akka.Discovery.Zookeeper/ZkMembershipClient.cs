@@ -25,10 +25,7 @@ public class ZkMembershipClient : IDisposable
     private readonly string _rootNode;
 
     /// <summary>
-    /// This is the identifying content regarding this client member.  Typically this would be the host name of this
-    /// client, but it doesn't need to be.  For example, you could pass a string of "host_name:ip_address:port_number"
-    /// or even a serialized object or protobuf.  The only requirement is that it can be represented as a byte array.
-    /// This value is not used for any sort of lookup
+    /// This is the identifying content regarding this client member, we're using the ZkMemberProto for its content
     /// </summary>
     private readonly byte[] _nodeData;
 
@@ -64,39 +61,23 @@ public class ZkMembershipClient : IDisposable
     /// <summary>
     /// The node that represents this client in the group
     /// </summary>
-    public ZkMember SelfNode
+    public ZkMember? SelfNode
     {
         get
         {
-            var myNodeContent = System.Text.Encoding.UTF8.GetString(_nodeData);
-            return Members.FirstOrDefault(node => node.DataAsString == myNodeContent)
-                   ?? throw new InvalidOperationException();
+            var myKey = new ZkMemberKey(_nodeData);
+            foreach (var m in Members)
+            {
+                var theirKey = new ZkMemberKey(m.Data);
+                if (myKey.Equals(theirKey))
+                    return m;
+            }
+
+            return null;
         }
     }
 
     public string MembershipNodePath => _rootNode;
-
-    /// <summary>
-    /// Create a new membership client using a string as the Zookeeper node content
-    /// </summary>
-    /// <param name="connectionString">For a single ZK node or a comma-separated list of cluster members
-    /// <example>zoo1.corp.netfile.com:2181</example>
-    /// <example>zoo1:2181,zoo2:2181,zoo3:2181</example></param>
-    /// <param name="fullPathToMembershipNode">Complete route to membership node, in a unix file-path format.
-    /// This must be configured the same for every member of the same group
-    /// <example>/netfile.com/ring-queue/service-discovery/processor-hosts</example></param>
-    /// <param name="hostName">Content stored within the individual node for this client instance.  For group
-    /// membership, there is not any sort of a requirement for its contents.  Other recipies may require specific
-    /// content type or structure.<example>oakwinq05.corp.netfile.com</example></param>
-    /// <param name="log"></param>
-    /// <param name="sessionTimeoutInMilliseconds">Defaults to 10 seconds</param>
-    /// <exception cref="ArgumentNullException"></exception>
-    /// <exception cref="ArgumentOutOfRangeException"></exception>
-    public ZkMembershipClient(string connectionString, string fullPathToMembershipNode,
-        string hostName, ILoggingAdapter log, int sessionTimeoutInMilliseconds = 10000) : this(connectionString,
-        fullPathToMembershipNode, System.Text.Encoding.UTF8.GetBytes(hostName), log, sessionTimeoutInMilliseconds)
-    {
-    }
 
     /// <summary>
     /// Create a new membership client using arbitrary byte data as the Zookeeper node content

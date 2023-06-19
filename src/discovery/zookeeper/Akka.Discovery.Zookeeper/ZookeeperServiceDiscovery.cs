@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
 using System.Threading.Tasks;
@@ -68,7 +67,7 @@ public class ZookeeperServiceDiscovery: ServiceDiscovery
             var members = await _guardianActor.Ask<ImmutableList<ZkMember>>(lookup, resolveTimeout);
            
             var result = new Resolved(lookup.ServiceName, 
-               members.Select(m => new ResolvedTarget(m.Host, m.Port, m.Address))
+               members.Select(m => new ResolvedTarget(m.Key.Host, m.Key.Port, m.Key.Address))
                    .ToImmutableList());
 
             if (_log.IsDebugEnabled)

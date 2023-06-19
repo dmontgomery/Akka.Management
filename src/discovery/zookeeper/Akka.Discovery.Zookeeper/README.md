@@ -1,7 +1,3 @@
-Follow this:
-
-https://jack-vanlightly.com/blog/2019/2/1/building-a-simple-distributed-system-the-implementation
-
 # Zookeeper Based Discovery
 
 This module can be used as a discovery method for any cluster that has access to a Zookeeper service.
@@ -16,7 +12,7 @@ using var host = new HostBuilder()
     {
         services.AddAkka("actorSystem", (builder, provider) =>
         {
-            builder.WithZookeeperDiscovery("your-zookeeper-conection-string");
+            builder.WithZookeeperDiscovery("your-zookeeper-connection-string", serviceName: "defaultService", publicHostName: "localhost", publicPort: 18558);
         });
     })
     .Build();
@@ -32,7 +28,7 @@ akka.discovery {
   method = zookeeper
   zookeeper {
     # The service name assigned to the cluster.
-    service-name = "default"
+    service-name = "defaultService"
     
     # The connection string used to connect to Zookeeper Table hosting the cluster membership table
     # MANDATORY FIELD: MUST be provided, else the discovery plugin WILL throw an exception.
@@ -65,7 +61,7 @@ var system = ActorSystem.Create("my-system", actorSystemSetup);
 ```
 
 ## Using Discovery Together with Akka.Management and Cluster.Bootstrap
-All discovery plugins are designed to work with Cluster.Bootstrap to provide an automated way to form a cluster that is not based on hard wired seeds configuration.
+All discovery plugins are designed to work with Cluster.Bootstrap to provide an automated way to form a cluster that is not based on hard-wired seeds configuration.
 
 ### Configuring using Akka.Hosting
 
@@ -142,3 +138,8 @@ cluster.RegisterOnMemberUp(() => {
   log.Info($"Current up members: [{string.Join(", ", upMembers)}]")
 });
 ```
+
+Additional helpful documentation about Zookeeper written for C#:
+
+https://jack-vanlightly.com/blog/2019/2/1/building-a-simple-distributed-system-the-implementation
+
