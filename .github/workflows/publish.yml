@@ -1,0 +1,20 @@
+name: publish package on commit to zookeeper branch
+on:
+  push:
+    branches:
+      - zookeeper-service-discovery # Default release branch
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v1
+    - name: Build
+      run: dotnet build src/discovery/zookeeper/Akka.Discovery.Zookeeper/Akka.Discovery.Zookeeper.csproj -c Release --version-suffix prerelease-$(date +%Y%m%d%H%M%S)
+    - name: Pack
+      run: dotnet pack src/discovery/zookeeper/Akka.Discovery.Zookeeper/Akka.Discovery.Zookeeper.csproj -c Release --version-suffix prerelease-$(date +%Y%m%d%H%M%S)
+    - name: Auth
+      run: dotnet nuget add source --username dmontgomery --password ${{ secrets.GITHUB_TOKEN }} --store-password-in-clear-text --name github "https://nuget.pkg.github.com/dmontgomery/index.json"
+    - name: Publish  
+      run: dotnet nuget push src/discovery/zookeeper/Akka.Discovery.Zookeeper/bin/Release/*.nupkg --api-key ${{ secrets.GITHUB_TOKEN }}  --source "github"
