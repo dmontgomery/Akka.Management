@@ -10,6 +10,7 @@
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <Copyright>Copyright © 2013-2023 Akka.NET Team</Copyright>
     <RepositoryUrl>https://github.com/dmontgomery/Akka.Management</RepositoryUrl>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
   </PropertyGroup>
 
   <ItemGroup>
@@ -37,5 +38,9 @@
   <ItemGroup>
     <None Include="README.md" Pack="true" PackagePath="\" />
   </ItemGroup>
+
+  <Target Name="PostBuild" AfterTargets="PostBuildEvent">
+    <Exec Command="dotnet nuget push bin/Release/*.nupkg -s PersonalNuget" />
+  </Target>
 
 </Project>
