@@ -17,4 +17,4 @@ jobs:
     - name: Auth
       run: dotnet nuget add source --username dmontgomery --password ${{ secrets.PAT_PACKAGE }} --store-password-in-clear-text --name github "https://nuget.pkg.github.com/dmontgomery/index.json"
     - name: Publish  
-      run: dotnet nuget push src/discovery/zookeeper/Akka.Discovery.Zookeeper/bin/Release/*.nupkg --api-key ${{ secrets.GITHUB_TOKEN }}  --source "github"
+      run: dotnet nuget push src/discovery/zookeeper/Akka.Discovery.Zookeeper/bin/Release/*.nupkg --api-key ${{ secrets.PAT_PACKAGE }}  --source "github"
