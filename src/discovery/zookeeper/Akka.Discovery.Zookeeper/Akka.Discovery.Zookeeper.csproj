@@ -4,13 +4,9 @@
     <TargetFramework>netstandard2.0</TargetFramework>
     <Description>Akka.NET Service Discovery for Zookeeper-enabled services. Works with App Service, Container Apps, and more.</Description>
     <PackageTags>$(AkkaPackageTags);AppService;Service Discovery;Zookeeper</PackageTags>
-    <VersionPrefix>0.2.2</VersionPrefix>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <PackageId>Akka.Discovery.Zookeeper.Fork</PackageId>
     <PackageReadmeFile>README.md</PackageReadmeFile>
-    <Copyright>Copyright © 2013-2023 Akka.NET Team</Copyright>
-    <RepositoryUrl>https://github.com/dmontgomery/Akka.Management</RepositoryUrl>
-    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
   </PropertyGroup>
 
   <ItemGroup>
